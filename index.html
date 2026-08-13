@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Islande — Carte Roadtrip Famille</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<style>
+  :root{
+    --bg: #0b1220;
+    --panel: #101a2b;
+    --panel2: #16233a;
+    --border: #223350;
+    --text: #e8eef7;
+    --muted: #92a4c2;
+    --accent: #5ec9c0;
+    --accent2: #e8a45c;
+    --accent3: #b892e8;
+    --danger: #e8735c;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);}
+  #app{display:flex; height:100vh; width:100vw;}
+  #sidebar{
+    width:340px; min-width:340px; background:var(--panel); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  #sidebar header{
+    padding:18px 18px 12px; border-bottom:1px solid var(--border);
+  }
+  #sidebar header h1{
+    font-size:18px; margin:0 0 4px; letter-spacing:.3px; color:var(--text);
+  }
+  #sidebar header p{margin:0; font-size:12px; color:var(--muted);}
+  #routeTabs{
+    display:flex; flex-wrap:wrap; gap:6px; padding:12px 14px; border-bottom:1px solid var(--border);
+  }
+  .routeTab{
+    padding:6px 10px; border-radius:20px; font-size:12px; cursor:pointer;
+    border:1px solid var(--border); background:var(--panel2); color:var(--muted); transition:.15s;
+    user-select:none;
+  }
+  .routeTab.active{ color:#0b1220; font-weight:600; }
+  #routeMeta{ padding:10px 14px; font-size:12px; color:var(--muted); border-bottom:1px solid var(--border);}
+  #routeMeta b{color:var(--text);}
+  #stopsList{ flex:1; overflow-y:auto; padding:8px 0; }
+  .stopCard{
+    padding:10px 16px; border-left:3px solid transparent; cursor:pointer; transition:.15s;
+  }
+  .stopCard:hover{ background:var(--panel2); }
+  .stopCard.active{ background:var(--panel2); border-left-color:var(--accent); }
+  .stopCard .idx{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:20px; height:20px; border-radius:50%; background:var(--accent); color:#0b1220;
+    font-size:11px; font-weight:700; margin-right:8px;
+  }
+  .stopCard .name{ font-size:13.5px; font-weight:600; }
+  .stopCard .cat{ font-size:10.5px; color:var(--muted); margin-left:28px; }
+  .stopCard .desc{ font-size:11.5px; color:var(--muted); margin:4px 0 0 28px; line-height:1.4;}
+  #map{ flex:1; min-height:300px; min-width:300px; background:#0b1220; }
+  .leaflet-popup-content-wrapper{
+    background:var(--panel); color:var(--text); border-radius:10px; border:1px solid var(--border);
+  }
+  .leaflet-popup-tip{ background:var(--panel); }
+  .popupTitle{ font-weight:700; font-size:14px; margin-bottom:2px; }
+  .popupCat{ font-size:10.5px; color:var(--accent); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px;}
+  .popupDesc{ font-size:12.5px; line-height:1.5; color:#cdd8ea; }
+  .popupTip{ margin-top:6px; font-size:11.5px; color:var(--accent2); }
+  .legend{
+    position:absolute; bottom:16px; left:16px; z-index:500; background:var(--panel);
+    border:1px solid var(--border); border-radius:10px; padding:10px 14px; font-size:11.5px; color:var(--muted);
+    display:flex; gap:14px; flex-wrap:wrap; max-width:260px;
+  }
+  .legend span{display:flex; align-items:center; gap:6px;}
+  .dot{width:9px; height:9px; border-radius:50%; display:inline-block;}
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:4px;}
+  .badge{
+    display:inline-block; font-size:10px; padding:2px 7px; border-radius:10px; margin-left:6px;
+    background:var(--panel2); color:var(--muted); border:1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="sidebar">
+    <header>
+      <h1>🇮🇸 Islande — Roadtrip Famille</h1>
+      <p>Choisissez un itinéraire, cliquez sur une étape pour la localiser</p>
+    </header>
+    <div id="routeTabs"></div>
+    <div id="routeMeta"></div>
+    <div id="stopsList"></div>
+  </div>
+  <div id="map"></div>
+</div>
+
+<script>
+// ---------- DONNÉES ----------
+const CATS = {
+  nature: {label:"Nature / Cascade", color:"#5ec9c0"},
+  geo: {label:"Géologie / Volcan", color:"#e8a45c"},
+  ville: {label:"Ville / Village", color:"#b892e8"},
+  plage: {label:"Plage / Côte", color:"#e8735c"},
+  glacier: {label:"Glacier", color:"#7fb0e8"},
+  culture: {label:"Culture / Histoire", color:"#f0d264"}
+};
+
+// Chaque point : id, nom, cat, lat, lng, desc, tip
+const POINTS = {
+  reykjavik: {name:"Reykjavík", cat:"ville", lat:64.1466, lng:-21.9426, desc:"Capitale, point de départ/arrivée. Vieux port, Hallgrímskirkja, Harpa.", tip:"Prévoir 1 jour avant/après le road trip."},
+  thingvellir: {name:"Þingvellir", cat:"geo", lat:64.2559, lng:-21.1295, desc:"Parc national, faille entre plaques tectoniques, ancien site du parlement viking (Alþingi).", tip:"Snorkeling à Silfra si envie d'aventure."},
+  geysir: {name:"Geysir & Strokkur", cat:"geo", lat:64.3108, lng:-20.3024, desc:"Champ géothermique, geyser Strokkur qui jaillit toutes les 5-10 min.", tip:"Rester en retrait du vent pour ne pas se faire éclabousser."},
+  gullfoss: {name:"Gullfoss", cat:"nature", lat:64.3271, lng:-20.1199, desc:"Immense cascade à double chute dans un canyon spectaculaire.", tip:"Belle en fin de journée avec la lumière rasante."},
+  kerid: {name:"Kerið", cat:"geo", lat:64.0417, lng:-20.8837, desc:"Cratère volcanique avec lac turquoise, petit détour sur le Cercle d'Or.", tip:"Entrée payante mais rapide à visiter (20-30 min)."},
+  seljalandsfoss: {name:"Seljalandsfoss", cat:"nature", lat:63.6156, lng:-19.9886, desc:"Cascade qu'on peut contourner entièrement, chemin derrière le rideau d'eau.", tip:"Prévoir vêtement de pluie, ça éclabousse fort."},
+  skogafoss: {name:"Skógafoss", cat:"nature", lat:63.5321, lng:-19.5116, desc:"Cascade massive de 60m, escalier pour vue en hauteur, souvent arc-en-ciel.", tip:"Départ du sentier de randonnée Fimmvörðuháls."},
+  reynisfjara: {name:"Reynisfjara", cat:"plage", lat:63.4038, lng:-19.0428, desc:"Plage de sable noir, orgues basaltiques, falaises de Reynisdrangar.", tip:"Ne jamais tourner le dos à l'océan (vagues sournoises)."},
+  vik: {name:"Vík í Mýrdal", cat:"ville", lat:63.4186, lng:-19.0060, desc:"Village le plus au sud, base pratique pour la nuit sur la côte sud.", tip:"Station essence + supermarché, bon point de ravitaillement."},
+  fjadrargljufur: {name:"Fjaðrárgljúfur", cat:"nature", lat:63.7722, lng:-18.1719, desc:"Canyon sinueux et verdoyant, vue impressionnante depuis les sentiers en crête.", tip:"Rendu célèbre par le clip 'I'll show you' de Justin Bieber."},
+  skaftafell: {name:"Skaftafell", cat:"glacier", lat:64.0169, lng:-16.9750, desc:"Partie du parc Vatnajökull, randonnées vers glaciers et Svartifoss (cascade aux orgues basaltiques).", tip:"Base idéale pour une rando sur glacier guidée."},
+  jokulsarlon: {name:"Jökulsárlón", cat:"glacier", lat:64.0784, lng:-16.2306, desc:"Lagune glaciaire avec icebergs flottants dérivant vers l'océan.", tip:"Traverser la route vers Diamond Beach juste en face."},
+  diamondbeach: {name:"Diamond Beach", cat:"plage", lat:64.0459, lng:-16.1793, desc:"Plage de sable noir où s'échouent des morceaux de glace scintillants.", tip:"Meilleure lumière tôt le matin ou fin d'après-midi."},
+  hofn: {name:"Höfn", cat:"ville", lat:64.2539, lng:-15.2082, desc:"Petit port de pêche, capitale islandaise du homard (langoustine).", tip:"Bonne étape nuit avant/après la lagune glaciaire."},
+  egilsstadir: {name:"Egilsstaðir", cat:"ville", lat:65.2669, lng:-14.3948, desc:"Principal centre de l'Est, hub pour explorer les fjords de l'est.", tip:"Point de bascule si vous coupez le Ring Road complet."},
+  seydisfjordur: {name:"Seyðisfjörður", cat:"culture", lat:65.2642, lng:-14.0088, desc:"Village de fjord coloré, art, rue arc-en-ciel, ferries vers le Danemark.", tip:"Détour magnifique mais route de montagne, vérifier météo."},
+  myvatn: {name:"Mývatn", cat:"geo", lat:65.6009, lng:-16.9985, desc:"Lac volcanique, pseudo-cratères, champs de lave Dimmuborgir, bains géothermiques.", tip:"Faire les Mývatn Nature Baths, moins chers que le Blue Lagoon."},
+  dettifoss: {name:"Dettifoss", cat:"nature", lat:65.8145, lng:-16.3841, desc:"Cascade la plus puissante d'Europe, débit impressionnant.", tip:"Piste d'accès en gravier, prévoir 4x4 ou prudence."},
+  husavik: {name:"Húsavík", cat:"ville", lat:66.0449, lng:-17.3389, desc:"Capitale islandaise de l'observation des baleines.", tip:"Réserver la sortie baleines à l'avance en haute saison."},
+  akureyri: {name:"Akureyri", cat:"ville", lat:65.6835, lng:-18.0878, desc:"Deuxième ville du pays, jardin botanique, bon point de ravitaillement pour le Nord.", tip:"Bonne base pour 2 nuits, restaurants sympas."},
+  godafoss: {name:"Goðafoss", cat:"nature", lat:65.6828, lng:-17.5502, desc:"'Cascade des Dieux', large et élégante, facile d'accès depuis la route.", tip:"Accessible des deux rives, prendre le côté ouest pour la meilleure vue."},
+  snaefellsjokull: {name:"Snæfellsjökull", cat:"glacier", lat:64.8083, lng:-23.7767, desc:"Volcan glacier emblématique (Jules Verne, Voyage au centre de la Terre), péninsule de Snæfellsnes.", tip:"Faire le tour complet de la péninsule en une journée."},
+  kirkjufell: {name:"Kirkjufell", cat:"nature", lat:64.9394, lng:-23.3070, desc:"Montagne la plus photographiée d'Islande, avec sa cascade Kirkjufellsfoss au premier plan.", tip:"Lever ou coucher de soleil pour la meilleure photo."},
+  arnarstapi: {name:"Arnarstapi", cat:"plage", lat:64.7697, lng:-23.6244, desc:"Falaises basaltiques spectaculaires, arche naturelle, sentier côtier vers Hellnar.", tip:"Balade facile en famille, env. 2,5 km aller."},
+  bluelagoon: {name:"Blue Lagoon", cat:"culture", lat:63.8804, lng:-22.4495, desc:"Spa géothermal emblématique près de l'aéroport de Keflavík.", tip:"Réserver son créneau plusieurs semaines à l'avance."},
+  landmannalaugar: {name:"Landmannalaugar", cat:"geo", lat:63.9938, lng:-19.0611, desc:"Montagnes de rhyolite multicolores, sources chaudes, cœur des Hautes Terres.", tip:"Accessible en F-road (4x4 obligatoire), fermé hors saison estivale."}
+};
+
+// Itinéraires : liste d'ids POINTS dans l'ordre + couleur + métadonnées
+const ROUTES = {
+  goldencircle: {
+    label:"Cercle d'Or", color:"#5ec9c0", days:"1 jour", km:"~250 km",
+    desc:"Le classique en boucle depuis Reykjavík — parfait pour une première journée en famille.",
+    stops:["reykjavik","thingvellir","geysir","gullfoss","kerid","reykjavik"]
+  },
+  southcoast: {
+    label:"Côte Sud", color:"#e8a45c", days:"3-4 jours", km:"~450 km (aller simple jusqu'à Höfn)",
+    desc:"Cascades, plages de sable noir et lagune glaciaire — l'itinéraire le plus spectaculaire pour un premier séjour.",
+    stops:["reykjavik","seljalandsfoss","skogafoss","vik","reynisfjara","fjadrargljufur","skaftafell","jokulsarlon","diamondbeach","hofn"]
+  },
+  ringroad: {
+    label:"Tour de l'île (Ring Road)", color:"#b892e8", days:"9-12 jours", km:"~1400 km",
+    desc:"Le tour complet de l'Islande par la Route 1 — la totale, du sud à l'est puis au nord jusqu'à l'ouest.",
+    stops:["reykjavik","seljalandsfoss","skogafoss","vik","reynisfjara","fjadrargljufur","skaftafell","jokulsarlon","diamondbeach","hofn","egilsstadir","seydisfjordur","myvatn","dettifoss","husavik","akureyri","godafoss","reykjavik"]
+  },
+  snaefellsnes: {
+    label:"Péninsule de Snæfellsnes", cat:"snaefell", color:"#f0d264", days:"1-2 jours", km:"~250 km",
+    desc:"'L'Islande en miniature' — volcan glacier, montagnes iconiques et falaises, idéal si le temps manque pour le tour complet.",
+    stops:["reykjavik","kirkjufell","arnarstapi","snaefellsjokull","reykjavik"]
+  },
+  highlands: {
+    label:"Hautes Terres & Blue Lagoon", color:"#7fb0e8", days:"2 jours", km:"~350 km",
+    desc:"Option aventure (été uniquement, 4x4) : montagnes multicolores de Landmannalaugar, puis détente au Blue Lagoon en fin de séjour.",
+    stops:["reykjavik","landmannalaugar","bluelagoon","reykjavik"]
+  }
+};
+
+// ---------- CARTE ----------
+const map = L.map('map', {zoomControl:true}).setView([64.9, -18.5], 6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution:'&copy; OpenStreetMap contributors',
+  subdomains:'abc', maxZoom:19
+}).addTo(map);
+
+// Fix Leaflet rendering when the container size isn't known at init time (common in embedded/iframe contexts)
+function fixMapSize(){ map.invalidateSize(); }
+window.addEventListener('load', ()=> setTimeout(fixMapSize, 150));
+window.addEventListener('resize', fixMapSize);
+setTimeout(fixMapSize, 300);
+setTimeout(fixMapSize, 1000);
+
+function makeIcon(color){
+  return L.divIcon({
+    className:'',
+    html:`<div style="width:16px;height:16px;border-radius:50%;background:${color};border:2px solid #0b1220;box-shadow:0 0 0 2px ${color}55;"></div>`,
+    iconSize:[16,16], iconAnchor:[8,8]
+  });
+}
+
+const markers = {};
+Object.entries(POINTS).forEach(([id,p])=>{
+  const color = CATS[p.cat].color;
+  const m = L.marker([p.lat,p.lng], {icon: makeIcon(color)});
+  m.bindPopup(`
+    <div class="popupTitle">${p.name}</div>
+    <div class="popupCat">${CATS[p.cat].label}</div>
+    <div class="popupDesc">${p.desc}</div>
+    <div class="popupTip">💡 ${p.tip}</div>
+  `);
+  markers[id] = m;
+});
+
+let currentRouteLine = null;
+let currentMarkersGroup = null;
+
+function loadRoute(key){
+  const route = ROUTES[key];
+  // clear previous
+  if(currentRouteLine) map.removeLayer(currentRouteLine);
+  if(currentMarkersGroup) map.removeLayer(currentMarkersGroup);
+
+  const latlngs = route.stops.map(id => [POINTS[id].lat, POINTS[id].lng]);
+  currentRouteLine = L.polyline(latlngs, {color: route.color, weight:3, opacity:.85, dashArray:'6,6'}).addTo(map);
+
+  currentMarkersGroup = L.layerGroup();
+  const seen = new Set();
+  route.stops.forEach((id, i)=>{
+    if(seen.has(id)) return; // avoid duplicate marker for loop start/end
+    seen.add(id);
+    markers[id].addTo(currentMarkersGroup);
+  });
+  currentMarkersGroup.addTo(map);
+
+  map.fitBounds(currentRouteLine.getBounds(), {padding:[40,40]});
+
+  // sidebar
+  document.getElementById('routeMeta').innerHTML =
+    `<b>${route.label}</b> · ${route.days} · ${route.km}<br>${route.desc}`;
+
+  const list = document.getElementById('stopsList');
+  list.innerHTML = '';
+  route.stops.forEach((id, i)=>{
+    const p = POINTS[id];
+    const card = document.createElement('div');
+    card.className = 'stopCard';
+    card.dataset.id = id;
+    card.innerHTML = `
+      <div><span class="idx" style="background:${route.color}">${i+1}</span><span class="name">${p.name}</span></div>
+      <div class="cat">${CATS[p.cat].label}</div>
+      <div class="desc">${p.desc}</div>
+    `;
+    card.onclick = ()=>{
+      map.flyTo([p.lat,p.lng], 11, {duration:0.8});
+      markers[id].openPopup();
+      document.querySelectorAll('.stopCard').forEach(c=>c.classList.remove('active'));
+      card.classList.add('active');
+    };
+    list.appendChild(card);
+  });
+
+  document.querySelectorAll('.routeTab').forEach(t=>{
+    t.classList.toggle('active', t.dataset.key === key);
+    t.style.background = t.dataset.key === key ? ROUTES[t.dataset.key].color : 'var(--panel2)';
+    t.style.borderColor = t.dataset.key === key ? ROUTES[t.dataset.key].color : 'var(--border)';
+  });
+}
+
+// tabs
+const tabsEl = document.getElementById('routeTabs');
+Object.entries(ROUTES).forEach(([key, r])=>{
+  const tab = document.createElement('div');
+  tab.className = 'routeTab';
+  tab.dataset.key = key;
+  tab.textContent = r.label;
+  tab.onclick = ()=> loadRoute(key);
+  tabsEl.appendChild(tab);
+});
+
+// legend
+const legend = L.control({position:'bottomleft'});
+legend.onAdd = function(){
+  const div = L.DomUtil.create('div','legend');
+  div.innerHTML = Object.values(CATS).map(c=>
+    `<span><span class="dot" style="background:${c.color}"></span>${c.label}</span>`
+  ).join('');
+  return div;
+};
+legend.addTo(map);
+
+// init
+loadRoute('goldencircle');
+</script>
+</body>
+</html>
