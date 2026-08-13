@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Islande — Carte Roadtrip Famille</title>
+<title>Islande — Carte Roadtrip</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
@@ -38,9 +38,9 @@
     display:flex; flex-wrap:wrap; gap:6px; padding:12px 14px; border-bottom:1px solid var(--border);
   }
   .routeTab{
-    padding:6px 10px; border-radius:20px; font-size:12px; cursor:pointer;
+    padding:6px 10px; border-radius:20px; font-size:11.5px; cursor:pointer;
     border:1px solid var(--border); background:var(--panel2); color:var(--muted); transition:.15s;
-    user-select:none;
+    user-select:none; line-height:1.3;
   }
   .routeTab.active{ color:#0b1220; font-weight:600; }
   #routeMeta{ padding:10px 14px; font-size:12px; color:var(--muted); border-bottom:1px solid var(--border);}
@@ -87,7 +87,7 @@
 <div id="app">
   <div id="sidebar">
     <header>
-      <h1>🇮🇸 Islande — Roadtrip Famille</h1>
+      <h1>🇮🇸 Islande — Roadtrip</h1>
       <p>Choisissez un itinéraire, cliquez sur une étape pour la localiser</p>
     </header>
     <div id="routeTabs"></div>
@@ -135,7 +135,28 @@ const POINTS = {
   kirkjufell: {name:"Kirkjufell", cat:"nature", lat:64.9394, lng:-23.3070, desc:"Montagne la plus photographiée d'Islande, avec sa cascade Kirkjufellsfoss au premier plan.", tip:"Lever ou coucher de soleil pour la meilleure photo."},
   arnarstapi: {name:"Arnarstapi", cat:"plage", lat:64.7697, lng:-23.6244, desc:"Falaises basaltiques spectaculaires, arche naturelle, sentier côtier vers Hellnar.", tip:"Balade facile en famille, env. 2,5 km aller."},
   bluelagoon: {name:"Blue Lagoon", cat:"culture", lat:63.8804, lng:-22.4495, desc:"Spa géothermal emblématique près de l'aéroport de Keflavík.", tip:"Réserver son créneau plusieurs semaines à l'avance."},
-  landmannalaugar: {name:"Landmannalaugar", cat:"geo", lat:63.9938, lng:-19.0611, desc:"Montagnes de rhyolite multicolores, sources chaudes, cœur des Hautes Terres.", tip:"Accessible en F-road (4x4 obligatoire), fermé hors saison estivale."}
+  landmannalaugar: {name:"Landmannalaugar", cat:"geo", lat:63.9938, lng:-19.0611, desc:"Montagnes de rhyolite multicolores, sources chaudes, cœur des Hautes Terres.", tip:"Accessible en F-road (4x4 obligatoire), fermé hors saison estivale."},
+
+  // --- Ajoutés depuis les guides papier (Petit Futé) ---
+  reykholt: {name:"Reykholt", cat:"culture", lat:64.6667, lng:-21.2917, desc:"Ancien domaine de Snorri Sturluson, auteur des sagas islandaises, avec ses bains médiévaux.", tip:"Petit musée Snorrastofa très instructif, arrêt court."},
+  husafell: {name:"Húsafell", cat:"nature", lat:64.6928, lng:-20.9000, desc:"Vallée verdoyante au pied des glaciers, base pour piscine géothermale et randonnées.", tip:"Bon point de chute pour couper le trajet vers Hraunfossar."},
+  hraunfossar: {name:"Hraunfossar & Barnafoss", cat:"nature", lat:64.7167, lng:-20.9667, desc:"Cascades qui suintent littéralement d'un champ de lave sur des centaines de mètres, juste à côté de Barnafoss.", tip:"Les deux cascades se visitent ensemble en 30-45 min à pied."},
+  glanni: {name:"Glanni", cat:"nature", lat:64.7539, lng:-21.5464, desc:"Cascade encaissée dans la rivière Norðurá, réputée hantée par les elfes selon la légende locale.", tip:"Peu fréquenté, bonne pause pique-nique."},
+  grundarfjordur: {name:"Grundarfjörður", cat:"ville", lat:64.9186, lng:-23.2517, desc:"Village de pêcheurs au pied du mont Kirkjufell, point de ravitaillement de la péninsule.", tip:"Bon point de chute pour photographier Kirkjufell au lever du soleil."},
+  hellnar: {name:"Hellnar", cat:"plage", lat:64.7594, lng:-23.6500, desc:"Hameau côtier avec grottes marines et sentier de falaises vers Arnarstapi.", tip:"Café Fjöruhúsið réputé pour sa soupe de poisson face à la mer."},
+  budir: {name:"Búðir", cat:"plage", lat:64.8167, lng:-23.7833, desc:"Célèbre église noire isolée face à l'océan et aux montagnes, sur un ancien cordon de lave.", tip:"Superbe au coucher du soleil, très photogénique."},
+  ytritunga: {name:"Ytri Tunga", cat:"plage", lat:64.7900, lng:-23.4700, desc:"Plage où l'on peut observer des phoques se reposer sur les rochers.", tip:"Meilleures chances de voir des phoques à marée basse."},
+  kolugljufur: {name:"Kolugljúfur", cat:"nature", lat:65.1697, lng:-20.4706, desc:"Canyon spectaculaire creusé par la rivière Víðidalsá, cascades encaissées, peu touristique.", tip:"Passerelle et sentiers des deux côtés du canyon, superbe halte sur la route du nord."},
+  asbyrgi: {name:"Canyon d'Ásbyrgi", cat:"nature", lat:66.0167, lng:-16.5000, desc:"Canyon en fer à cheval bordé de falaises, selon la légende créé par le sabot du cheval d'Odin.", tip:"Belle rando facile en famille jusqu'au point de vue Eyjan."},
+  djupivogur: {name:"Djúpivogur", cat:"ville", lat:64.6547, lng:-14.2778, desc:"Charmant petit port des fjords de l'Est, œuvre d'art 'Eggin í Gleðivík' (34 œufs géants) sur le port.", tip:"Bonne étape déjeuner entre Höfn et Egilsstaðir."},
+  fluidir: {name:"Flúðir", cat:"culture", lat:64.1414, lng:-20.3097, desc:"Village agricole connu pour ses serres géothermiques et le Secret Lagoon, plus authentique que le Blue Lagoon.", tip:"Secret Lagoon = bain chaud nature, moins cher et moins fréquenté."},
+  thjorsardalur: {name:"Þjórsárdalur", cat:"culture", lat:64.0500, lng:-19.7333, desc:"Vallée au pied du volcan Hekla, ferme viking reconstituée de Stöng ensevelie par une éruption en 1104.", tip:"Combiner avec le Lava Centre à Hvolsvöllur pour comprendre le volcanisme islandais."},
+  hella: {name:"Hella", cat:"ville", lat:63.8333, lng:-20.4000, desc:"Petite ville agricole du sud, bon point de ravitaillement entre Selfoss et Hvolsvöllur.", tip:"Peu de choses à voir en soi, surtout utile comme étape logistique."},
+  kirkjubaejarklaustur: {name:"Kirkjubæjarklaustur", cat:"ville", lat:63.7889, lng:-18.0567, desc:"Ancien site d'un couvent, entouré de champs de lave moussue (Eldhraun) issus de l'éruption du Laki en 1783.", tip:"Bonne étape nuit entre Vík et Skaftafell/Jökulsárlón."},
+  vestmannaeyjar: {name:"Îles Vestmann (Heimaey)", cat:"ville", lat:63.4397, lng:-20.2716, desc:"Archipel volcanique, éruption de l'Eldfell en 1973 qui a englouti une partie de la ville, colonies de macareux.", tip:"Accès en ferry depuis Landeyjahöfn (~35 min), réserver le véhicule à l'avance."},
+  grindavik: {name:"Grindavík", cat:"ville", lat:63.8425, lng:-22.4328, desc:"Village de pêcheurs de la péninsule de Reykjanes, proche du Blue Lagoon et des zones d'éruptions récentes.", tip:"Se renseigner sur l'activité volcanique récente avant de s'y rendre."},
+  seltun: {name:"Seltún / Krýsuvík", cat:"geo", lat:63.8908, lng:-22.0578, desc:"Zone géothermale colorée avec fumerolles et mares de boue bouillonnante, sur la péninsule de Reykjanes.", tip:"Rester strictement sur les passerelles, le sol est instable et brûlant."},
+  gunnuhver: {name:"Gunnuhver", cat:"geo", lat:63.8172, lng:-22.6839, desc:"Plus grande zone de fumerolles d'Islande, nommée d'après un fantôme de la légende locale, vue sur l'océan.", tip:"Proche du phare de Reykjanestá, bon combo pour la fin de journée."}
 };
 
 // Itinéraires : liste d'ids POINTS dans l'ordre + couleur + métadonnées
@@ -164,6 +185,91 @@ const ROUTES = {
     label:"Hautes Terres & Blue Lagoon", color:"#7fb0e8", days:"2 jours", km:"~350 km",
     desc:"Option aventure (été uniquement, 4x4) : montagnes multicolores de Landmannalaugar, puis détente au Blue Lagoon en fin de séjour.",
     stops:["reykjavik","landmannalaugar","bluelagoon","reykjavik"]
+  },
+
+  // --- Itinéraires extraits des guides papier (Petit Futé) ---
+  grandtour15: {
+    label:"Grand Tour — 15 jours", color:"#e8735c", days:"15 jours", km:"~2000 km",
+    desc:"Le tour complet du guide : Cercle d'Or, Hautes Terres, côte sud, fjords de l'Est, nord et retour par l'ouest. L'itinéraire le plus complet pour un long séjour famille.",
+    stops:[
+      {id:"reykjavik", day:"Jour 1"},
+      {id:"thingvellir", day:"Jour 2"},
+      {id:"geysir", day:"Jour 2"},
+      {id:"gullfoss", day:"Jour 2"},
+      {id:"fluidir", day:"Jour 3"},
+      {id:"landmannalaugar", day:"Jour 4"},
+      {id:"seljalandsfoss", day:"Jour 5"},
+      {id:"vik", day:"Jour 5"},
+      {id:"jokulsarlon", day:"Jour 6"},
+      {id:"hofn", day:"Jour 6"},
+      {id:"djupivogur", day:"Jour 7"},
+      {id:"egilsstadir", day:"Jour 7"},
+      {id:"seydisfjordur", day:"Jour 8"},
+      {id:"dettifoss", day:"Jour 9"},
+      {id:"asbyrgi", day:"Jour 9"},
+      {id:"husavik", day:"Jour 10"},
+      {id:"myvatn", day:"Jour 11"},
+      {id:"akureyri", day:"Jour 12"},
+      {id:"kolugljufur", day:"Jour 13"},
+      {id:"reykholt", day:"Jour 14"},
+      {id:"bluelagoon", day:"Jour 15"}
+    ]
+  },
+  snaefellsnes7: {
+    label:"Snæfellsnes & Cercle d'Or — 7 jours", color:"#f0d264", days:"7 jours", km:"~700 km",
+    desc:"Format plus court : la péninsule de Snæfellsnes ('l'Islande en miniature') combinée au Cercle d'Or classique, idéal pour une semaine.",
+    stops:[
+      {id:"reykjavik", day:"Jours 1-2"},
+      {id:"reykholt", day:"Jour 3"},
+      {id:"husafell", day:"Jour 3"},
+      {id:"hraunfossar", day:"Jour 3"},
+      {id:"hellnar", day:"Jour 4"},
+      {id:"budir", day:"Jour 4"},
+      {id:"ytritunga", day:"Jour 4"},
+      {id:"kirkjufell", day:"Jour 5"},
+      {id:"grundarfjordur", day:"Jour 5"},
+      {id:"snaefellsjokull", day:"Jour 5"},
+      {id:"glanni", day:"Jour 6"},
+      {id:"thingvellir", day:"Jour 7"},
+      {id:"geysir", day:"Jour 7"},
+      {id:"gullfoss", day:"Jour 7"}
+    ]
+  },
+  southvestmann7: {
+    label:"Sud, Îles Vestmann & Blue Lagoon — 7 jours", color:"#5ec9c0", days:"7 jours", km:"~600 km",
+    desc:"La côte sud classique enrichie d'une excursion aux Îles Vestmann (macareux, volcan Eldfell) et d'une fin de séjour détente au Blue Lagoon.",
+    stops:[
+      {id:"reykjavik", day:"Jour 1"},
+      {id:"thingvellir", day:"Jour 2"},
+      {id:"geysir", day:"Jour 3"},
+      {id:"gullfoss", day:"Jour 3"},
+      {id:"thjorsardalur", day:"Jour 3"},
+      {id:"hella", day:"Jour 4"},
+      {id:"seljalandsfoss", day:"Jour 4"},
+      {id:"reynisfjara", day:"Jour 4"},
+      {id:"vik", day:"Jour 4"},
+      {id:"kirkjubaejarklaustur", day:"Jour 5"},
+      {id:"skaftafell", day:"Jour 5"},
+      {id:"jokulsarlon", day:"Jour 5"},
+      {id:"hofn", day:"Jour 5"},
+      {id:"vestmannaeyjar", day:"Jour 6"},
+      {id:"bluelagoon", day:"Jour 7"}
+    ]
+  },
+  reykjanes5: {
+    label:"Reykjavík & Péninsule de Reykjanes — 5 jours", color:"#b892e8", days:"5 jours", km:"~350 km",
+    desc:"Format court idéal pour une escale ou un premier séjour : ville de Reykjavík, Cercle d'Or, et péninsule volcanique de Reykjanes juste à côté de l'aéroport.",
+    stops:[
+      {id:"reykjavik", day:"Jour 1"},
+      {id:"thingvellir", day:"Jour 2"},
+      {id:"geysir", day:"Jour 2"},
+      {id:"gullfoss", day:"Jour 2"},
+      {id:"fluidir", day:"Jour 2"},
+      {id:"seltun", day:"Jour 4"},
+      {id:"grindavik", day:"Jour 4"},
+      {id:"gunnuhver", day:"Jour 5"},
+      {id:"bluelagoon", day:"Jour 5"}
+    ]
   }
 };
 
@@ -205,18 +311,23 @@ Object.entries(POINTS).forEach(([id,p])=>{
 let currentRouteLine = null;
 let currentMarkersGroup = null;
 
+// Un stop peut être une simple string "id" ou un objet {id, day} pour les itinéraires jour par jour
+function stopId(s){ return typeof s === 'string' ? s : s.id; }
+function stopDay(s){ return typeof s === 'string' ? null : s.day; }
+
 function loadRoute(key){
   const route = ROUTES[key];
   // clear previous
   if(currentRouteLine) map.removeLayer(currentRouteLine);
   if(currentMarkersGroup) map.removeLayer(currentMarkersGroup);
 
-  const latlngs = route.stops.map(id => [POINTS[id].lat, POINTS[id].lng]);
+  const latlngs = route.stops.map(s => { const p = POINTS[stopId(s)]; return [p.lat, p.lng]; });
   currentRouteLine = L.polyline(latlngs, {color: route.color, weight:3, opacity:.85, dashArray:'6,6'}).addTo(map);
 
   currentMarkersGroup = L.layerGroup();
   const seen = new Set();
-  route.stops.forEach((id, i)=>{
+  route.stops.forEach(s=>{
+    const id = stopId(s);
     if(seen.has(id)) return; // avoid duplicate marker for loop start/end
     seen.add(id);
     markers[id].addTo(currentMarkersGroup);
@@ -231,13 +342,15 @@ function loadRoute(key){
 
   const list = document.getElementById('stopsList');
   list.innerHTML = '';
-  route.stops.forEach((id, i)=>{
+  route.stops.forEach((s, i)=>{
+    const id = stopId(s);
+    const day = stopDay(s);
     const p = POINTS[id];
     const card = document.createElement('div');
     card.className = 'stopCard';
     card.dataset.id = id;
     card.innerHTML = `
-      <div><span class="idx" style="background:${route.color}">${i+1}</span><span class="name">${p.name}</span></div>
+      <div><span class="idx" style="background:${route.color}">${i+1}</span><span class="name">${p.name}</span>${day ? `<span class="badge">${day}</span>` : ''}</div>
       <div class="cat">${CATS[p.cat].label}</div>
       <div class="desc">${p.desc}</div>
     `;
